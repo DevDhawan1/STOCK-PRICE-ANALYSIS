@@ -11,6 +11,7 @@ It includes data collection, visualization, statistical analysis, and time serie
 - **NFLX** — Netflix, Inc.  
 - **AAPL** — Apple Inc.  
 - **TSLA** — Tesla Inc.
+  
 📅 **Date Range:** 4 June 2015 – 4 June 2025  
 🛠️ **Interval:** Daily
 
