@@ -59,7 +59,6 @@ Each stock was modeled **independently** using the same LSTM architecture.
 - Graphs provide visual insight into prediction accuracy.
 
 ---
----
 
 ## 🔎Analysis
 
