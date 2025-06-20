@@ -1,198 +1,159 @@
 # 📈 Stock Market Forecasting Using Deep Learning
 
-This project forecasts the stock prices of multiple major companies using an LSTM-based deep learning model. By learning from historical trends in each stock individually, the model aims to predict future closing prices and visualize its accuracy.
+This project delves into forecasting stock prices of major companies, initially leveraging advanced deep learning models like **LSTM** and **GRU**, and extending into an interactive **web application** for data visualization and simulated future trends. By learning from historical patterns, the project aims to predict future closing prices and provide insightful visualizations of market behavior.
 
+It encompasses a full data science pipeline: **data collection, robust pre-processing, statistical analysis, time series forecasting with deep learning, and interactive deployment**.
 
-It includes data collection, visualization, statistical analysis, and time series forecasting with deep learning models (GRU). Interactive plots and clear visualizations are provided to explore trends, compare performance, and evaluate prediction results.
+---
 
 ## 📊 Stocks Analyzed
 
 - **JPM** — JPMorgan Chase & Co.  
 - **NFLX** — Netflix, Inc.  
 - **AAPL** — Apple Inc.  
-- **TSLA** — Tesla Inc.
-  
-📅 **Date Range:** 4 June 2015 – 4 June 2025  
-🛠️ **Interval:** Daily
+- **TSLA** — Tesla Inc.  
+
+**📅 Historical Data Date Range:** 4 June 2015 – 4 June 2025  
+**🛠️ Interval:** Daily  
 
 ---
 
 ## 🧠 Technologies Used
 
-- **Python 3.x**
-- **Jupyter Notebook**
-- **Libraries:**
-  - `pandas`, `numpy`
-  - `matplotlib`, `seaborn`
-  - `scikit-learn`
-  - `keras` (TensorFlow backend)
-  - `yfinance` for data collection
+- **Python 3.13**
+- **Jupyter Notebook** (for research, model training, and analysis)
+- **Streamlit** (for interactive web app)
+
+**Libraries:**
+- `pandas`, `numpy` – Data manipulation and numerical operations  
+- `matplotlib`, `seaborn` – Static visualizations  
+- `plotly` – Interactive visualizations  
+- `scikit-learn` – Preprocessing (MinMaxScaler)  
+- `keras` (TensorFlow backend) – Deep learning model training  
+- `yfinance` – Historical data fetching  
 
 ---
 
 ## 📥 Data Source
 
-All stock data was collected using the [`yfinance`](https://pypi.org/project/yfinance/) Python library, which retrieves historical market data from Yahoo Finance.
+- All stock data during model training was fetched using the `yfinance` Python package.
+- For deployment, historical data is read from pre-compiled CSV files stored within the project repository to ensure fast, reliable app performance.
 
 ---
 
 ## 🏗️ Project Workflow
 
-### 1. Data Collection
-- Used `yfinance` to fetch historical stock price data for each ticker individually.
+### 1. **Data Collection**
+- Used `yfinance` to fetch historical data (2015–2025) for each ticker.
 
-### 2. Preprocessing
-- Selected only the 'Close' prices for analysis.
-- Normalized values between 0 and 1 using **MinMaxScaler**.
-- Created 100-day lookback windows to form time series sequences for LSTM.
+### 2. **Preprocessing**
+- Selected `'Close'` prices for modeling.
+- Normalized data with **MinMaxScaler**.
+- Created **100-day lookback windows** for time series sequences.
 
-### 3. Model Architecture
+### 3. **Model Architecture**
+- **LSTM**: Captures long-term dependencies.
+- **GRU**: Efficient alternative with similar capabilities.
 
-Each stock was modeled **independently** using the same LSTM architecture.
+Each stock was modeled independently.
 
-### 4. Training and Testing
-- Trained each model on 80% of its stock’s data.
-- Tested on the remaining 20% to evaluate forecasting performance.
-- Trained for 100 epochs (modifiable).
+### 4. **Training & Testing**
+- 80% training / 20% testing split.
+- Models trained for **100 epochs** (configurable).
 
-### 5. Visualization
-- Plotted **actual vs predicted** closing prices for each stock individually.
-- Graphs provide visual insight into prediction accuracy.
+### 5. **Visualization**
+- Plotted **actual vs. predicted prices** to evaluate accuracy and trend alignment.
+
+---
+
+## 🌐 Interactive Web Application
+
+Built using **Streamlit** to enable user interaction and forecast exploration.
+
+### 🔗 [Live Demo](https://stock-predictor-devdhawan.streamlit.app/)
+
+
+### 🔧 Features
+
+- **Dynamic Stock Selection**: Choose AAPL, TSLA, NFLX, or JPM.
+- **Forecast Period Slider**: Customize between 1 to 4 future years.
+- **Interactive Visualizations**:
+  - Actual & forecasted prices (Plotly)
+  - Open/Close price history
+  - Simulated future forecast
+- **Data Tables**:
+  - Historical OHLCV data
+  - Simulated forecast data
+
+### ⚠️ Forecasts in the App
+
+> Forecasts are currently **simulated** using statistical trends from the data (not deep learning model outputs). Integration of trained LSTM/GRU predictions is planned for future updates.
 
 ---
 
-## 🔎Analysis
+## 🔎 Insights from Jupyter Notebook
 
-<p align="center">
-  <img src="images/high_compare_original.png" alt="High Comparison Plot" width="600">
-</p>
+### 📈 High Value Trends
 
-The LSTM model successfully captured time-based patterns in each stock’s price behavior and produced forecasts that align with historical trends.
+- **AAPL**: Steady, linear post-2019 growth.
+- **TSLA**: Exponential rise after 2019 with high volatility.
+- **NFLX**: Growth between 2018–2021, minor dips after.
+- **JPM**: Stable price behavior, easier to predict.
 
-### 📈 High Value Trends & Observations
+### 📉 Limitations
 
-- **Apple (AAPL)** displayed a steadily increasing trajectory in its "High" values over the 10-year period. Especially post-2019, the highs followed a near-linear growth trend with fewer drastic spikes, reflecting its stable market sentiment and strong fundamentals.
-
-<p align="center">
-  <img src="images/high_mean_stdev_aapl.png" alt="Apple Trends" width="600">
-</p>
-  
-- **Tesla (TSLA)** showed an exponential rise in its "High" values after 2019, reflecting the surge in investor interest and rapid market expansion. TSLA’s “High” value overtook others after 2020, though with noticeable volatility. This made the model’s prediction more challenging during periods of steep climbs or corrections.
-
-<p align="center">
-  <img src="images/high_mean_stdev_tsla.png" alt="Tesla Trends" width="600">
-</p>
-  
-- **Netflix (NFLX)** initially tracked similar "High" values as JPM and remained close until around 2012. However, post-2013, NFLX began a consistent upward trend with significant spikes between 2018–2021, coinciding with major subscription growth and global expansion. Thereafter, slight dips were observed.
-
-<p align="center">
-  <img src="images/high_mean_stdev_nflx.png" alt="Netflix Trends" width="600">
-</p>
-  
-- **JPMorgan Chase (JPM)** maintained a relatively flat and stable "High" value range, with minor peaks around 2018 and again in 2022. Compared to the tech stocks, JPM’s stock behaved more conservatively, leading to higher prediction accuracy for this ticker.
-
-<p align="center">
-  <img src="images/high_mean_stdev_jpm.png" alt="JPM Trends" width="600">
-</p>
-
-### 🔍 Insights
-
-- The **"High" value comparison** across these companies shows how tech-driven companies (TSLA, NFLX, AAPL) experience more aggressive growth than financial institutions like JPM.
-- A **notable competition** in stock highs is visible post-2016, especially between TSLA and AAPL, with TSLA eventually taking the lead.
-- **JPM** had periods (like 2009–2013) where the highs remained under the mean for extended durations, indicating **post-crisis recovery** and a **stable market position** rather than aggressive expansion.
-
-<p align="center">
-  <img src="images/stock_attr_jpm.png" alt="Stock Attributes JPM" width="600">
-</p>
-
-### 📉 Error & Limitations
-
-- LSTM captured **long-term trends** effectively but sometimes lagged during **sudden jumps or sharp corrections** — more prominent in TSLA and NFLX.
-- Stocks with **smoother and consistent patterns** (like JPM and AAPL) yielded **lower prediction error**.
-- Limited feature set (only using 'Close' prices) might have **constrained** the model’s ability to fully interpret market behavior during volatile phases.
-
-## 📊 Predictions
-
-After training the LSTM model on each stock's historical closing prices, we generated predictions for the final 20% of the dataset (i.e., the test set). The model's forecasts aim to closely follow the actual market behavior based on past patterns.
-
-### 🧪 Evaluation
-
-- Predictions were made for the **daily closing prices** of each stock.
-- Each model was evaluated visually through line plots comparing actual vs. predicted prices.
-- The accuracy was qualitatively assessed by observing how well the model tracked upward/downward trends.
-
-### 📉 Sample Predictions Overview
-
-| Ticker | Performance | Notes |
-|--------|-------------|-------|
-| **AAPL** | ✅ High accuracy | Smooth trend captured well with minimal lag. |
-| **TSLA** | ⚠️ Moderate accuracy | High volatility caused slight underfitting in sharp movements. |
-| **NFLX** | ✅ Good trend capture | Some fluctuation during earnings cycles. |
-| **JPM**  | ✅ Stable prediction | Lower volatility led to strong fit and minimal error. |
-
-### 📈 Visualization
-
-Each stock’s prediction output is visualized in its own chart:
-- **Blue line**: Actual stock closing prices  
-- **Orange line**: Predicted stock prices by the LSTM model
-
+- Sudden jumps or dips (TSLA, NFLX) caused prediction lag.
+- Only using `'Close'` prices limits model understanding of market context.
 
 ---
+
+## 🧪 Model Evaluation
+
+### ✅ Test Set Forecast Performance
+
+| Ticker | Performance       | Notes                                         |
+|--------|-------------------|-----------------------------------------------|
+| AAPL   | ✅ High Accuracy   | Smooth trend, minimal lag                     |
+| TSLA   | ⚠️ Moderate       | Volatility led to slight underfitting         |
+| NFLX   | ✅ Good            | Missed a few sharp dips                       |
+| JPM    | ✅ Stable          | Low volatility ensured strong prediction fit  |
+
+### 📊 Visual Output
+
+- **Blue Line**: Actual Closing Prices  
+- **Orange Line**: Predicted Prices by LSTM  
+
+---
+
+## 📸 Sample Model Visualizations
 
 ### 🍏 Apple Inc. (AAPL)
-
-Apple's predictions closely follow its actual prices, reflecting consistent long-term growth. The model handles Apple’s relatively stable pattern with high accuracy.
-
-<p align="center">
-  <img src="images/pred_vs_actual_aapl.png" alt="Prediction AAPL" width="600">
-</p>
-
----
+- Accurate long-term prediction.
+- Handles stable pattern effectively.
 
 ### 🚗 Tesla Inc. (TSLA)
-
-Tesla’s high volatility posed a challenge, but the model still captured general trends well. Slight lags during sharp spikes are visible.
-
-<p align="center">
-  <img src="images/pred_vs_actual_tsla.png" alt="Prediction TSLA" width="600">
-</p>
-
----
+- Captures overall trend.
+- Struggles during sharp spikes.
 
 ### 📺 Netflix Inc. (NFLX)
-
-Netflix's seasonal growth and pullbacks were modeled effectively. The LSTM performed well during stable periods but missed a few sharp dips.
-
-<p align="center">
-  <img src="images/pred_vs_actual_nflx.png" alt="Prediction NFLX" width="600">
-</p>
-
----
+- Handles seasonal patterns well.
+- Misses occasional sharp dips.
 
 ### 🏦 JPMorgan Chase & Co. (JPM)
-
-JPM’s conservative price movements were modeled smoothly, with predictions overlapping the actual prices for much of the test range.
-
-<p align="center">
-  <img src="images/pred_vs_actual_jpm.png" alt="Prediction JPM" width="600">
-</p>
+- Predictions closely follow actual prices.
 
 ---
-
-
-These visual plots help in:
-- Observing how closely the model follows real market trends
-- Identifying lag or under/overestimation during sharp movements
-- Evaluating generalization on unseen data
 
 ## 🔗 Connect with Me
 
-Feel free to reach out or explore more of my work:
+Feel free to reach out or explore more:
 
-- 📇 **LinkedIn**: [Devansh Dhawan](https://www.linkedin.com/in/devanshdhawan/)  
-- 📁 **Portfolio / Other Projects**: [GitHub Profile](https://github.com/DevDhawan1)  
-- 📬 **Email**: devanshdhawan8943@gmail.com
+- 📇 [LinkedIn – Devansh Dhawan](https://www.linkedin.com/in/devansh-dhawan)
+- 📁 [GitHub Profile](https://github.com/devanshdhawan8943)
+- 📬 Email: **devanshdhawan8943@gmail.com**
 
+---
 
-🎉 **Thanks for reading!**  
-Feel free to ⭐ star the repo, share your thoughts, or connect with me on my socials.
+## 🎉 Thanks for reading!
+
+If you found this project helpful, please ⭐ star the repo, share your feedback, or connect on socials!
