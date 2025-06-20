@@ -2,81 +2,138 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+import time # Import time for delays
 
-# --- Helper function to generate dummy stock data (historical + simulated prediction) ---
-def generate_dummy_data(symbol, start_date, end_date, initial_price, volatility_factor, trend_factor, prediction_years):
+# --- Data Loading Functions ---
+
+# Function to load data from CSV
+def load_data_from_csv(symbol):
     """
-    Generates dummy stock data including Open, High, Low, Close, Adj Close, Volume,
-    and simulated future predictions.
-
-    Args:
-        symbol (str): Stock symbol.
-        start_date (datetime): Start date for historical data generation.
-        end_date (datetime): End date for historical data generation.
-        initial_price (float): Starting price.
-        volatility_factor (float): Factor for price fluctuations.
-        trend_factor (float): Factor to simulate an upward trend.
-        prediction_years (int): Number of years to predict into the future.
-
-    Returns:
-        pd.DataFrame: DataFrame with stock data, including 'PredictedClose' for future dates.
+    Attempts to load historical stock data from a CSV file with a specific,
+    unusual header and data structure (as observed in provided images).
+    Assumes CSV has a header in row 0, a junk row in row 1, and data starting row 2 (index 2).
+    Manually assigns column names.
     """
-    data = []
-    current_date = start_date
-    current_open = initial_price
-    current_close = initial_price
+    csv_file_path = f"{symbol}_data.csv"
+    try:
+        st.info(f"Attempting to load data from {csv_file_path} with custom parsing...")
+        
+        # Read CSV: skip the first two header/junk rows and don't assume a header
+        # The 'names' argument will assign these column names directly to the data.
+        # Based on image_1f8665.png, the order of data columns is Date, Close, High, Low, Open, Volume
+        column_names = ['Date', 'Close', 'High', 'Low', 'Open', 'Volume']
+        df = pd.read_csv(csv_file_path, header=None, skiprows=[0, 1], names=column_names)
+        
+        # Clean column names (strip whitespace - although manually assigned, good practice)
+        df.columns = df.columns.str.strip()
 
-    # Generate historical data
-    while current_date <= end_date:
-        day_vol = (np.random.rand() - 0.5) * volatility_factor * 0.01
-        current_close = current_open + current_open * trend_factor + day_vol
-        current_close = max(current_close, initial_price * 0.5) # Prevent price from dropping too low
+        # Check for essential columns manually assigned
+        essential_cols = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume'] # Adj Close will be derived
+        for col in essential_cols:
+            if col not in df.columns:
+                st.error(f"Missing essential column '{col}' even after custom parsing for {csv_file_path}. Data might be malformed or header structure is different. Skipping CSV loading.")
+                return pd.DataFrame()
 
-        high = round(current_close * (1 + np.random.rand() * 0.02), 2) # High is slightly above close
-        low = round(current_close * (1 - np.random.rand() * 0.02), 2)  # Low is slightly below close
-        volume = int(1000000 + np.random.rand() * 10000000) # Random volume
+        # Ensure 'Date' column is in correct format, coercing errors
+        try:
+            df['Date'] = pd.to_datetime(df['Date'], errors='coerce', format='%d-%m-%Y') # Explicit format for safety
+            df = df.dropna(subset=['Date']) 
+            
+            if df['Date'].empty:
+                st.error(f"After parsing, the 'Date' column in {csv_file_path} is empty or contains no valid dates. Please ensure date format is consistent (e.g., DD-MM-YYYY). Skipping CSV loading.")
+                return pd.DataFrame()
 
-        data.append({
-            'Date': current_date.strftime('%Y-%m-%d'),
-            'Open': round(current_open, 2),
-            'High': high,
-            'Low': low,
-            'Close': round(current_close, 2),
-            'Adj Close': round(current_close, 2), # For simplicity, Adj Close = Close
-            'Volume': volume,
-            'Type': 'Actual' # Mark as actual data
-        })
+            df['Date'] = df['Date'].dt.strftime('%Y-%m-%d') # Format back to string as YYYY-MM-DD
+        except Exception as e:
+            st.error(f"Error processing 'Date' column in {csv_file_path}: {e}. Please ensure date format is consistent (e.g., DD-MM-YYYY). Skipping CSV loading.")
+            return pd.DataFrame()
+        
+        # Ensure required numeric columns are numeric, coercing errors
+        numeric_cols_to_check = ['Open', 'High', 'Low', 'Close', 'Volume']
+        for col in numeric_cols_to_check:
+            df[col] = pd.to_numeric(df[col], errors='coerce') # Coerce errors to NaN
+        
+        # Drop rows with NaN in critical financial columns after coercion
+        df = df.dropna(subset=['Open', 'High', 'Low', 'Close'])
 
-        current_open = current_close # Next day's open is current day's close
-        current_date += timedelta(days=1)
+        if df.empty:
+            st.warning(f"CSV file {csv_file_path} loaded but contained no valid data rows after cleaning (e.g., missing essential values or unparseable dates).")
+            return pd.DataFrame()
 
-    df_historical = pd.DataFrame(data)
+        # Add 'Adj Close' column, assuming it's the same as 'Close' if not explicitly in CSV
+        # If your yfinance export has 'Adj Close' as a separate column, you'd add it to 'column_names' list above
+        if 'Adj Close' not in df.columns:
+            df['Adj Close'] = df['Close'] # For consistency with yfinance output format
 
-    # Simulate future prediction data
-    last_historical_date = datetime.strptime(df_historical['Date'].iloc[-1], '%Y-%m-%d')
+        df['Type'] = 'Actual'
+        st.success(f"Successfully loaded {len(df)} rows from {csv_file_path}.")
+        return df
+
+    except FileNotFoundError:
+        st.error(f"Fatal Error: CSV file not found for {symbol} at {csv_file_path}. Please ensure your CSV files are correctly placed in the app directory. The app cannot proceed without data.")
+        return pd.DataFrame() 
+    except Exception as e:
+        st.error(f"Fatal Error: An unexpected error occurred while reading CSV file {csv_file_path}: {e}. Please ensure your CSV file structure matches the expected format. The app cannot proceed without data.")
+        return pd.DataFrame()
+
+
+@st.cache_data(ttl=3600) # Cache data for 1 hour
+def get_stock_data(symbol, historical_start_date, historical_end_date, prediction_years):
+    """
+    Attempts to fetch historical stock data from a CSV file.
+    If CSV loading fails, returns empty DataFrames and the app will stop.
+    """
+    df_historical = pd.DataFrame()
+    
+    # --- Directly try loading from CSV ---
+    df_historical = load_data_from_csv(symbol)
+    
+    # --- If CSV loading fails, return empty DataFrames ---
+    if df_historical.empty:
+        # load_data_from_csv already prints the error message
+        return pd.DataFrame(), pd.DataFrame() # Return empty if no data can be loaded
+
+    # --- Simulate Future Prediction Data (always based on the successfully loaded historical data) ---
+    # Ensure df_historical is sorted by date before taking the last element
+    df_historical = df_historical.sort_values(by='Date').reset_index(drop=True)
+    
+    last_historical_date_str = df_historical['Date'].iloc[-1]
+    # Ensure last_historical_close_price is a single numeric value
+    last_historical_close_price = df_historical['Close'].iloc[-1]
+    if isinstance(last_historical_close_price, pd.Series):
+        last_historical_close_price = last_historical_close_price.iloc[0] # Take first element if it's a Series
+
+    last_historical_date = datetime.strptime(last_historical_date_str, '%Y-%m-%d')
     future_end_date = last_historical_date + timedelta(days=int(prediction_years * 365.25))
 
     predicted_data = []
-    current_predicted_price = df_historical['Close'].iloc[-1]
-    future_date = last_historical_date + timedelta(days=1) # Start prediction from the next day
+    current_predicted_price = last_historical_close_price
+    future_date = last_historical_date + timedelta(days=1)
+
+    trend_factor_pred = {
+        'AAPL': 0.0005, 'TSLA': 0.0015, 'NFLX': 0.001, 'JPM': 0.0002
+    }.get(symbol, 0.0005) 
+    volatility_factor_pred = {
+        'AAPL': 5, 'TSLA': 20, 'NFLX': 10, 'JPM': 2
+    }.get(symbol, 5) 
 
     while future_date <= future_end_date:
-        # Simulate future trend with some noise
-        current_predicted_price += current_predicted_price * (trend_factor * 1.5) + (np.random.rand() - 0.5) * (volatility_factor * 0.005)
-        current_predicted_price = max(current_predicted_price, initial_price * 0.5) # Prevent negative prices
+        current_predicted_price += current_predicted_price * trend_factor_pred + (np.random.rand() - 0.5) * volatility_factor_pred
+        current_predicted_price = max(current_predicted_price, 0.01) 
 
         predicted_data.append({
             'Date': future_date.strftime('%Y-%m-%d'),
-            'Open': None, 'High': None, 'Low': None, 'Volume': None, 'Adj Close': None, # No detailed future data
-            'Close': round(current_predicted_price, 2), # This will be the predicted close
-            'Type': 'Predicted' # Mark as predicted data
+            'Open': None, 'High': None, 'Low': None, 'Volume': None, 'Adj Close': None,
+            'Close': round(current_predicted_price, 2),
+            'Type': 'Predicted'
         })
         future_date += timedelta(days=1)
 
     df_predicted = pd.DataFrame(predicted_data)
 
-    return pd.concat([df_historical, df_predicted], ignore_index=True)
+    return df_historical, df_predicted
+
 
 # --- Streamlit App Layout ---
 
@@ -107,31 +164,19 @@ with col2:
         label_visibility="collapsed"
     )
 
-# --- Data Generation ---
+# --- Data Fetching and Separation ---
 # Define historical period (mimicking the notebook's 2015-2025)
 historical_start_date = datetime(2015, 6, 4)
-historical_end_date = datetime(2025, 6, 4)
+historical_end_date = datetime.today() # This is now just for defining the prediction end point, not for fetching historical
 
-@st.cache_data
-def get_stock_data(symbol, start_date, end_date, pred_years):
-    """Caches data generation to avoid re-running on every interaction."""
-    # Parameters for dummy data generation based on symbol
-    params = {
-        'AAPL': (25, 200, 0.001),
-        'TSLA': (40, 800, 0.003),
-        'NFLX': (10, 400, 0.002),
-        'JPM': (60, 200, 0.0005)
-    }
-    initial_price, volatility_factor, trend_factor = params.get(symbol, (50, 500, 0.001))
-    return generate_dummy_data(symbol, start_date, end_date, initial_price, volatility_factor, trend_factor, pred_years)
+st.write("Loading data... (Attempting to load from CSV files.)")
+df_historical, df_predicted = get_stock_data(selected_symbol, historical_start_date, historical_end_date, prediction_years)
 
-st.write("Loading data... done!") # Streamlit equivalent of "Loading data... done!"
+if df_historical.empty and df_predicted.empty:
+    # Error message is already displayed by load_data_from_csv or get_stock_data
+    st.stop() # Stop execution if no data at all
 
-df_stock = get_stock_data(selected_symbol, historical_start_date, historical_end_date, prediction_years)
-
-# Separate historical and predicted data
-df_historical = df_stock[df_stock['Type'] == 'Actual'].copy()
-df_predicted = df_stock[df_stock['Type'] == 'Predicted'].copy()
+st.write("Loading data... done!")
 
 # --- Combined Plot: Stock Price (Actual & Forecast) ---
 st.markdown("### Stock Price (Actual & Forecast)")
@@ -158,15 +203,16 @@ fig_combined.add_trace(go.Scatter(
     hovertemplate='<b>Date:</b> %{x}<br><b>Close:</b> %{y:.2f}<extra></extra>'
 ))
 
-# Trace for Predicted Close prices
-fig_combined.add_trace(go.Scatter(
-    x=df_predicted['Date'],
-    y=df_predicted['Close'],
-    mode='lines',
-    name='Predicted Close',
-    line=dict(color='#f6ad55', width=2, dash='dot'),
-    hovertemplate='<b>Date:</b> %{x}<br><b>Predicted:</b> %{y:.2f}<extra></extra>'
-))
+# Trace for Predicted Close prices (only if predicted data exists)
+if not df_predicted.empty:
+    fig_combined.add_trace(go.Scatter(
+        x=df_predicted['Date'],
+        y=df_predicted['Close'],
+        mode='lines',
+        name='Predicted Close',
+        line=dict(color='#f6ad55', width=2, dash='dot'),
+        hovertemplate='<b>Date:</b> %{x}<br><b>Predicted:</b> %{y:.2f}<extra></extra>'
+    ))
 
 fig_combined.update_layout(
     title={
@@ -192,7 +238,7 @@ fig_combined.update_layout(
     paper_bgcolor='rgba(0,0,0,0)', # Transparent background for the plot area
     plot_bgcolor='rgba(0,0,0,0)', # Transparent background for the chart area
     autosize=True,
-    margin=dict(l=50, r=50, b=80, t=100), # Increased top margin
+    margin=dict(l=50, r=50, b=80, t=100), # Increased top margin for title + legend
     hovermode='x unified',
     template='plotly_dark',
     legend=dict(
@@ -203,18 +249,7 @@ fig_combined.update_layout(
         bordercolor='rgba(0,0,0,0)',
         font=dict(color='white'),
         orientation='h'
-    ),
-    annotations=[
-        go.layout.Annotation(
-            xref="paper", yref="paper", x=0.95, y=0.05,
-            text='Forecasted data is simulated',
-            showarrow=False,
-            font=dict(color='#cbd5e0', size=10),
-            align='right',
-            bgcolor='rgba(0,0,0,0)',
-            opacity=0.7
-        )
-    ]
+    )
 )
 
 st.plotly_chart(fig_combined, use_container_width=True)
@@ -265,7 +300,7 @@ fig_historical.update_layout(
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
     autosize=True,
-    margin=dict(l=50, r=50, b=80, t=100), # Increased top margin
+    margin=dict(l=50, r=50, b=80, t=100), # Increased top margin for title + legend
     hovermode='x unified',
     template='plotly_dark',
     legend=dict(
@@ -316,14 +351,16 @@ st.markdown("### Forecast Plot")
 
 fig_forecast = go.Figure()
 
-fig_forecast.add_trace(go.Scatter(
-    x=df_predicted['Date'],
-    y=df_predicted['Close'],
-    mode='lines',
-    name='Predicted Close Price',
-    line=dict(color='#f6ad55', width=2, dash='solid'), # Solid orange for forecast
-    hovertemplate='<b>Date:</b> %{x}<br><b>Predicted:</b> %{y:.2f}<extra></extra>'
-))
+# Trace for Predicted Close prices (only if predicted data exists)
+if not df_predicted.empty:
+    fig_forecast.add_trace(go.Scatter(
+        x=df_predicted['Date'],
+        y=df_predicted['Close'],
+        mode='lines',
+        name='Predicted Close Price',
+        line=dict(color='#f6ad55', width=2, dash='solid'), # Solid orange for forecast
+        hovertemplate='<b>Date:</b> %{x}<br><b>Predicted:</b> %{y:.2f}<extra></extra>'
+    ))
 
 fig_forecast.update_layout(
     title={
@@ -348,7 +385,7 @@ fig_forecast.update_layout(
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
     autosize=True,
-    margin=dict(l=50, r=50, b=80, t=100), # Increased top margin
+    margin=dict(l=50, r=50, b=80, t=100), # Increased top margin for title + legend
     hovermode='x unified',
     template='plotly_dark',
     legend=dict(
