@@ -11,6 +11,7 @@ It includes data collection, visualization, statistical analysis, and time serie
 - **NFLX** — Netflix, Inc.  
 - **AAPL** — Apple Inc.  
 - **TSLA** — Tesla Inc.
+  
 📅 **Date Range:** 4 June 2015 – 4 June 2025  
 🛠️ **Interval:** Daily
 
@@ -59,11 +60,12 @@ Each stock was modeled **independently** using the same LSTM architecture.
 - Graphs provide visual insight into prediction accuracy.
 
 ---
----
 
 ## 🔎Analysis
 
-![images\high_compare_original.png](images\high_compare_original.png)
+<p align="center">
+  <img src="images/high_compare_original.png" alt="High Comparison Plot" width="600">
+</p>
 
 The LSTM model successfully captured time-based patterns in each stock’s price behavior and produced forecasts that align with historical trends.
 
@@ -71,19 +73,27 @@ The LSTM model successfully captured time-based patterns in each stock’s price
 
 - **Apple (AAPL)** displayed a steadily increasing trajectory in its "High" values over the 10-year period. Especially post-2019, the highs followed a near-linear growth trend with fewer drastic spikes, reflecting its stable market sentiment and strong fundamentals.
 
-![images\high_mean_stdev_aapl.png](images\high_mean_stdev_aapl.png)
+<p align="center">
+  <img src="images/high_mean_stdev_aapl.png" alt="Apple Trends" width="600">
+</p>
   
 - **Tesla (TSLA)** showed an exponential rise in its "High" values after 2019, reflecting the surge in investor interest and rapid market expansion. TSLA’s “High” value overtook others after 2020, though with noticeable volatility. This made the model’s prediction more challenging during periods of steep climbs or corrections.
 
-![images\high_mean_stdev_tsla.png](images\high_mean_stdev_tsla.png)
+<p align="center">
+  <img src="images/high_mean_stdev_tsla.png" alt="Tesla Trends" width="600">
+</p>
   
 - **Netflix (NFLX)** initially tracked similar "High" values as JPM and remained close until around 2012. However, post-2013, NFLX began a consistent upward trend with significant spikes between 2018–2021, coinciding with major subscription growth and global expansion. Thereafter, slight dips were observed.
 
-![images\high_mean_stdev_nflx.png](images\high_mean_stdev_nflx.png)
+<p align="center">
+  <img src="images/high_mean_stdev_nflx.png" alt="Netflix Trends" width="600">
+</p>
   
 - **JPMorgan Chase (JPM)** maintained a relatively flat and stable "High" value range, with minor peaks around 2018 and again in 2022. Compared to the tech stocks, JPM’s stock behaved more conservatively, leading to higher prediction accuracy for this ticker.
 
-![images\high_mean_stdev_jpm.png](images\high_mean_stdev_jpm.png)
+<p align="center">
+  <img src="images/high_mean_stdev_jpm.png" alt="JPM Trends" width="600">
+</p>
 
 ### 🔍 Insights
 
@@ -91,7 +101,9 @@ The LSTM model successfully captured time-based patterns in each stock’s price
 - A **notable competition** in stock highs is visible post-2016, especially between TSLA and AAPL, with TSLA eventually taking the lead.
 - **JPM** had periods (like 2009–2013) where the highs remained under the mean for extended durations, indicating **post-crisis recovery** and a **stable market position** rather than aggressive expansion.
 
-![images\stock_attr_jpm.png](images\stock_attr_jpm.png)
+<p align="center">
+  <img src="images/stock_attr_jpm.png" alt="Stock Attributes JPM" width="600">
+</p>
 
 ### 📉 Error & Limitations
 
@@ -131,7 +143,9 @@ Each stock’s prediction output is visualized in its own chart:
 
 Apple's predictions closely follow its actual prices, reflecting consistent long-term growth. The model handles Apple’s relatively stable pattern with high accuracy.
 
-![Apple Prediction](images\pred_vs_actual_aapl.png)
+<p align="center">
+  <img src="images/pred_vs_actual_aapl.png" alt="Prediction AAPL" width="600">
+</p>
 
 ---
 
@@ -139,7 +153,9 @@ Apple's predictions closely follow its actual prices, reflecting consistent long
 
 Tesla’s high volatility posed a challenge, but the model still captured general trends well. Slight lags during sharp spikes are visible.
 
-![Tesla Prediction](images\pred_vs_actual_tsla.png)
+<p align="center">
+  <img src="images/pred_vs_actual_tsla.png" alt="Prediction TSLA" width="600">
+</p>
 
 ---
 
@@ -147,7 +163,9 @@ Tesla’s high volatility posed a challenge, but the model still captured genera
 
 Netflix's seasonal growth and pullbacks were modeled effectively. The LSTM performed well during stable periods but missed a few sharp dips.
 
-![Netflix Prediction](images\pred_vs_actual_nflx.png)
+<p align="center">
+  <img src="images/pred_vs_actual_nflx.png" alt="Prediction NFLX" width="600">
+</p>
 
 ---
 
@@ -155,7 +173,9 @@ Netflix's seasonal growth and pullbacks were modeled effectively. The LSTM perfo
 
 JPM’s conservative price movements were modeled smoothly, with predictions overlapping the actual prices for much of the test range.
 
-![JPM Prediction](images\pred_vs_actual_jpm.png)
+<p align="center">
+  <img src="images/pred_vs_actual_jpm.png" alt="Prediction JPM" width="600">
+</p>
 
 ---
 
