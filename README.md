@@ -151,7 +151,7 @@ Feel free to reach out or explore more:
 - 📇 [LinkedIn – Devansh Dhawan](https://www.linkedin.com/in/devansh-dhawan)
 - 📁 [GitHub Profile](https://github.com/devanshdhawan8943)
 - 📬 Email: **devanshdhawan8943@gmail.com**
-- 🔗 [LinkedIn Project Post](https://www.linkedin.com/posts/devansh-dhawan_your-post-id-here](https://www.linkedin.com/feed/update/urn:li:activity:7341809534606155777/)
+- 🔗 [LinkedIn Project Post](https://www.linkedin.com/posts/devanshdhawan_datascience-python-streamlit-activity-7341809534606155777-wPHq?utm_source=share&utm_medium=member_desktop&rcm=ACoAADIW7boBo5rseCe7voSfjFd3ZkESJDyiS0g)
 
 ---
 
