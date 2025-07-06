@@ -6,21 +6,6 @@ from datetime import datetime, timedelta, date
 import time # Import time for delays
 import streamlit.components.v1 as components
 
-# Replace G-XXXXXXXXXX with your actual GA4 Measurement ID
-GA_JS = """
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-SWEFHRLPBR"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-SWEFHRLPBR');
-</script>
-"""
-
-# Inject the tracking script
-components.html(GA_JS, height=0)
-
 # --- Data Loading Functions ---
 
 # Function to load data from CSV
@@ -154,6 +139,21 @@ def get_stock_data(symbol, historical_start_date, historical_end_date, predictio
 # --- Streamlit App Layout ---
 
 st.set_page_config(layout="wide", page_title="Stock Forecast App")
+
+# Replace G-XXXXXXXXXX with your actual GA4 Measurement ID
+GA_JS = """
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-SWEFHRLPBR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-SWEFHRLPBR');
+</script>
+"""
+
+# Inject the tracking script
+components.html(GA_JS, height=0)
 
 st.title("Stock Forecast App")
 
